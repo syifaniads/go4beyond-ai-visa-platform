@@ -14,24 +14,24 @@
 
 This project goes beyond an LLM chatbot. The engineering problem is to coordinate **documents, asynchronous processing, retrieval, caching, partner rules, real-time status updates, privacy controls, and an AI reasoning layer** without blocking the user-facing request path.
 
-The prototype demonstrates a local, containerized architecture; the design work then shows how the same product could evolve toward high availability and a managed cloud deployment.
+The prototype demonstrates a localized containerized architecture; the design work then shows how the same product could evolve toward high availability and managed cloud infrastructure.
 
-## Product flow
+## User journey
 
-![Go4beyond prototype flow](./docs/screenshots/prototype-flow.png)
+```mermaid
+flowchart LR
+    A[AI-guided intake] --> B[Document upload]
+    B --> C[Automated review]
+    C --> D[Readiness score]
+    D --> E[Checklist + corrections]
+    E --> F[Contextual follow-up chat]
+```
 
-The final prototype presentation describes a four-stage user journey:
-
-1. **AI-guided chat** to capture destination, visa type, nationality, and intent.
-2. **Document upload** into the applicant workspace.
-3. **Automated review** for missing data, formatting issues, and readiness criteria.
-4. **Readiness score** with an actionable checklist before submission.
-
-The platform is positioned as **decision support and readiness guidance**, not as a visa authority and not as a guarantee of approval.
+The final prototype presentation describes four primary stages: **AI-guided chat → document upload → automated review → readiness score**. The platform is decision support, not a visa authority and not a guarantee of approval.
 
 ## Current MVP vs target architecture
 
-A key design decision in this portfolio is to separate **what the team demonstrated in the localized MVP** from **what was proposed for future scale**.
+A key portfolio decision is to separate **what the team demonstrated in the localized MVP** from **what was proposed for future scale**.
 
 | Area | Localized MVP / prototype | Scale / enterprise direction |
 |---|---|---|
@@ -39,148 +39,166 @@ A key design decision in this portfolio is to separate **what the team demonstra
 | API | FastAPI modular monolith | Stateless horizontally scalable API nodes |
 | Database | PostgreSQL | Primary + read replica / HA strategy |
 | Cache & messaging | Redis | Redis HA / managed equivalent |
-| Background processing | Celery workers | Resilient queues, retries, DLQ-oriented processing |
+| Background processing | Celery workers | resilient queues, retries, DLQ-oriented processing |
 | Object storage | MinIO / S3-compatible | Amazon S3 |
-| Local LLM | Ollama | Managed model platform such as Amazon Bedrock |
-| Search / retrieval | SearXNG + vector cache | Managed retrieval / knowledge-base services |
-| Monitoring | local / infrastructure monitoring concepts | Zabbix + cloud monitoring / alerting |
+| Local LLM | Ollama | managed model platform such as Amazon Bedrock |
+| Search / retrieval | SearXNG + vector cache | managed retrieval / knowledge-base services |
+| Monitoring | local/infrastructure monitoring concepts | Zabbix + cloud monitoring / alerting |
 | Deployment | Docker Compose on a single VPS | multi-instance HA, then cloud-native managed services |
 
-This distinction matters because the original project materials contain both **implemented prototype components** and **future-state AWS architecture**.
+See [MVP.md](./MVP.md) and [docs/DEPLOYMENT_ROADMAP.md](./docs/DEPLOYMENT_ROADMAP.md).
 
 ## Localized MVP architecture
 
-![Localized MVP architecture](./docs/screenshots/localized-mvp-architecture.png)
-
-The final prototype used a local/air-gapped approach so that the end-to-end workflow could be demonstrated without depending on a full cloud environment. The presentation identifies:
-
-- **Next.js** for the frontend;
-- **FastAPI** for the backend;
-- **PostgreSQL** for relational state;
-- **Redis** for cache / broker behavior;
-- **Celery** for background document processing;
-- **MinIO** for S3-compatible object storage;
-- **Ollama** for local LLM inference;
-- **SearXNG** for local web-search integration;
-- containerized deployment through **Docker**.
-
-See [MVP.md](./MVP.md) and [ARCHITECTURE.md](./ARCHITECTURE.md).
-
-## Event-driven processing
-
-![Event-driven architecture](./docs/screenshots/event-driven-architecture.png)
-
-Long-running OCR, AI extraction, document digitization, and similar jobs should not block synchronous API requests. The prototype architecture therefore separates the request path from background work:
-
 ```mermaid
-flowchart LR
-    U[Applicant / Partner] --> FE[Next.js]
-    FE --> API[FastAPI modular monolith]
+flowchart TB
+    USER[Applicant / Partner] --> FE[Next.js]
+    FE --> API[FastAPI Modular Monolith]
     API --> DB[(PostgreSQL)]
     API --> R[(Redis)]
     R --> W[Celery Workers]
-    W --> OBJ[(MinIO / Object Storage)]
-    W --> AI[Local AI / Extraction]
-    W --> DB
-    R --> API
+    API --> OBJ[(MinIO)]
+    W --> OBJ
+    W --> LLM[Ollama / AI Extraction]
+    API --> SEARCH[SearXNG / Knowledge Retrieval]
     API -->|SSE / status updates| FE
 ```
 
-The same design gives a natural migration path toward managed queues and worker fleets later.
+The final presentation identifies **Next.js, FastAPI, PostgreSQL, Redis, Celery, MinIO, Ollama, SearXNG, and Docker** as core localized-prototype components. The deck frames the prototype as running across 11+ localized containers.
+
+## Event-driven document processing
+
+Long-running OCR, AI extraction, digitization, and similar work should not block synchronous requests.
+
+```mermaid
+sequenceDiagram
+    actor U as Applicant
+    participant FE as Next.js
+    participant API as FastAPI
+    participant S as MinIO / Object Storage
+    participant R as Redis
+    participant W as Celery Worker
+    participant DB as PostgreSQL
+
+    U->>FE: Upload document
+    FE->>API: Request authorized upload
+    API-->>FE: Object key / short-lived upload authorization
+    FE->>S: Direct upload
+    FE->>API: Confirm / trigger review
+    API->>R: Enqueue job
+    R->>W: Deliver job
+    W->>S: Read document
+    W->>W: OCR / extraction / AI validation
+    W->>DB: Persist structured result + status
+    W->>R: Publish progress
+    API-->>FE: SSE / status update
+```
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) and [SCALABILITY_RESILIENCE.md](./SCALABILITY_RESILIENCE.md).
 
 ## Knowledge-cache flywheel
 
-The project also explores reducing repeated search and LLM cost by turning verified visa-rule research into reusable structured knowledge.
-
 ```mermaid
 flowchart LR
-    Q1[First query] --> WEB[Web / official-source research]
+    Q1[First query] --> WEB[Official-source / web research]
     WEB --> LLM[LLM synthesis]
-    LLM --> REC[Structured knowledge record]
-    REC --> VEC[(Vector store / semantic cache)]
+    LLM --> REC[Structured source-aware record]
+    REC --> VEC[(Vector / semantic cache)]
     Q2[Similar future query] --> VEC
-    VEC --> FAST[Low-latency retrieval]
+    VEC --> FAST[Low-latency reusable context]
 ```
 
-The final presentation frames this as: **research once, structure it, embed it, and reuse it for semantically similar future requests**. See [docs/KNOWLEDGE_CACHE.md](./docs/KNOWLEDGE_CACHE.md).
+The team presentation proposes turning expensive first-time research into reusable structured knowledge. A production implementation still needs source provenance, freshness checks, and cache invalidation. See [docs/KNOWLEDGE_CACHE.md](./docs/KNOWLEDGE_CACHE.md).
 
-## Secure document lifecycle
+## Security & privacy
 
-![Secure document lifecycle](./docs/screenshots/secure-document-lifecycle.png)
-
-Visa workflows can involve passports, identity records, bank statements, pay slips, invitation letters, and other sensitive files. The architecture therefore treats document handling as a separate security problem:
+Visa workflows can involve passports, national IDs, bank statements, pay slips, invitation letters, and other sensitive files. The project architecture therefore discusses:
 
 - authenticated and authorized upload requests;
-- time-limited upload authorization / presigned-object workflow;
-- direct upload to object storage where appropriate;
+- time-limited/presigned object upload patterns;
+- direct object-storage upload where appropriate;
 - encryption in transit and at rest;
-- metadata separated from raw document files;
-- ephemeral worker processing where possible;
+- metadata separated from raw files;
 - role-based access and administrative governance;
-- explicit retention, deletion, and privacy requirements.
+- data retention/deletion requirements;
+- minimum-necessary AI context;
+- source-aware visa-rule retrieval.
 
 See [SECURITY_PRIVACY.md](./SECURITY_PRIVACY.md).
 
-## Architecture evolution
-
-![Deployment roadmap](./docs/screenshots/deployment-roadmap.png)
-
-The team's roadmap separated deployment into three stages:
-
-1. **Prototype** - Docker Compose on a single VPS with localized dependencies.
-2. **Scale & HA** - reverse proxy/load balancing, multiple API instances, Redis resilience, database read replica / failover planning.
-3. **Enterprise cloud-native** - managed identity, durable object storage, managed queues, managed AI/RAG services, multi-AZ data services, and global delivery.
-
-The roadmap is a design direction, not a claim that every enterprise component was deployed during the prototype. See [docs/DEPLOYMENT_ROADMAP.md](./docs/DEPLOYMENT_ROADMAP.md).
-
 ## Service ecosystem
 
-Go4beyond models more than a direct applicant-to-AI interaction. The product coordinates:
+```mermaid
+flowchart TD
+    O[Official Sources] --> G[Go4beyond AI Visa Platform]
+    A[Applicants] --> G
+    P[Agency Partners] --> G
+    ADM[Admin Governance] --> G
+    G --> R[Readiness Guidance]
+    G --> PV[Partner Workflows / Value]
+```
 
-- **Applicants** - intent, documents, readiness feedback;
-- **Agency partners** - country/visa-specific workflow knowledge and plugin criteria;
-- **Admins** - governance, approval, publishing, and suspension;
-- **Official sources** - government and embassy requirements;
-- **AI / retrieval infrastructure** - extraction, retrieval, scoring assistance, and conversational guidance.
+Agency partners can encode country/visa-specific checklists and workflow knowledge through the plugin concept, while admins govern approval/publishing and official sources provide the grounding layer. See [docs/SERVICE_ECOSYSTEM.md](./docs/SERVICE_ECOSYSTEM.md).
 
-See [docs/SERVICE_ECOSYSTEM.md](./docs/SERVICE_ECOSYSTEM.md).
+## Architecture evolution
 
-## Architecture documentation
+```mermaid
+flowchart LR
+    P1[Phase 1: Local Docker Prototype] --> P2[Phase 2: Scale + HA]
+    P2 --> P3[Phase 3: Enterprise Cloud-Native]
+```
 
-A reviewer can navigate directly to the technical areas below:
+The roadmap moves from a single-VPS prototype toward load-balanced APIs, resilient queues/caches, database replica/failover patterns, durable object storage, and eventually managed identity, storage, queue, AI/RAG, database, and monitoring services. These later components are **design direction**, not claims that the complete enterprise architecture was deployed.
+
+## Reviewer navigation
 
 | Area | Document |
 |---|---|
+| Recruiter / CV summary | [PORTFOLIO.md](./PORTFOLIO.md) |
 | Current prototype boundary | [MVP.md](./MVP.md) |
-| System architecture & data flow | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| Event-driven design & resilience | [SCALABILITY_RESILIENCE.md](./SCALABILITY_RESILIENCE.md) |
-| Security, PII & document lifecycle | [SECURITY_PRIVACY.md](./SECURITY_PRIVACY.md) |
+| Architecture & data flows | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Scalability, retries, idempotency | [SCALABILITY_RESILIENCE.md](./SCALABILITY_RESILIENCE.md) |
+| Security, PII, document lifecycle | [SECURITY_PRIVACY.md](./SECURITY_PRIVACY.md) |
 | Observability & operations | [OBSERVABILITY.md](./OBSERVABILITY.md) |
 | Knowledge cache / retrieval | [docs/KNOWLEDGE_CACHE.md](./docs/KNOWLEDGE_CACHE.md) |
 | Service ecosystem | [docs/SERVICE_ECOSYSTEM.md](./docs/SERVICE_ECOSYSTEM.md) |
-| Deployment evolution | [docs/DEPLOYMENT_ROADMAP.md](./docs/DEPLOYMENT_ROADMAP.md) |
+| Deployment roadmap | [docs/DEPLOYMENT_ROADMAP.md](./docs/DEPLOYMENT_ROADMAP.md) |
+| Final presentation evidence notes | [docs/presentation/FINAL_PRESENTATION_NOTES.md](./docs/presentation/FINAL_PRESENTATION_NOTES.md) |
 | Original team evidence | [SOURCE_EVIDENCE.md](./SOURCE_EVIDENCE.md) |
 | Team attribution | [TEAM_ATTRIBUTION.md](./TEAM_ATTRIBUTION.md) |
 | Limitations / non-claims | [LIMITATIONS.md](./LIMITATIONS.md) |
-| Recruiter / CV summary | [PORTFOLIO.md](./PORTFOLIO.md) |
 
-## Important architecture-source distinction
+## Important source distinction
 
-The current architecture README in the original team repository describes a **hybrid on-prem + AWS reference design** and uses a Flask modular-monolith example, while the final prototype presentation describes the **localized MVP backend as FastAPI**. This portfolio preserves that distinction instead of silently merging the two designs:
+The current architecture README in the original team repository describes a **hybrid on-prem + AWS reference design** and uses a **Flask** modular-monolith example, while the final prototype presentation describes the localized MVP backend as **FastAPI**.
 
-- **FastAPI** = final localized prototype presentation;
-- **Flask + AWS hybrid description** = architecture/reference-design material in the team's current README;
+This portfolio preserves that difference:
+
+- **FastAPI** = final localized prototype evidence;
+- **Flask + AWS hybrid** = architecture/reference-design material in the current team README;
 - **historical implementation snapshot** = linked separately for source-level traceability.
 
-That difference is documented further in [LIMITATIONS.md](./LIMITATIONS.md).
+See [LIMITATIONS.md](./LIMITATIONS.md).
 
 ## My role
 
-**Role: Group Lead / Ketua Kelompok**
+**Group Lead / Ketua Kelompok**
 
-I coordinated the group project and its final technical narrative across product flow, architecture, prototype evidence, system trade-offs, and presentation. Because the project was collaborative, this repository intentionally separates **team-level implementation** from **individual ownership claims**. For verification and original artifacts, see [TEAM_ATTRIBUTION.md](./TEAM_ATTRIBUTION.md) and [SOURCE_EVIDENCE.md](./SOURCE_EVIDENCE.md).
+I coordinated the group project and its final technical narrative across product scope, architecture, prototype evidence, system trade-offs, and presentation. Because the work was collaborative, this repository separates **team-level implementation** from **individual ownership claims**. See [TEAM_ATTRIBUTION.md](./TEAM_ATTRIBUTION.md).
 
-## Ethical / product disclaimer
+## Evidence
+
+The portfolio links directly to:
+
+- the original team repository;
+- the historical implementation snapshot;
+- prepared document fixtures;
+- the original MVP screenshot directory;
+- a page-by-page record of the final technical presentation.
+
+See [SOURCE_EVIDENCE.md](./SOURCE_EVIDENCE.md).
+
+## Product disclaimer
 
 Go4beyond is a prototype decision-support system. Visa requirements can change and final decisions belong to the relevant government/consular authority. AI-generated readiness scores, extracted document data, and synthesized requirements require source traceability, freshness controls, and human review before production use.
 
@@ -189,4 +207,4 @@ Go4beyond is a prototype decision-support system. Visa requirements can change a
 **Portfolio owner:** [Syifani Adillah Salsabila](https://github.com/syifaniads)  
 **Role:** Group Lead / Ketua Kelompok  
 **Project:** APIE Advanced Camp Japan - Group 6  
-**Type:** Collaborative AI platform / backend architecture / distributed workflow prototype
+**Type:** Collaborative AI platform · backend architecture · distributed workflow prototype
