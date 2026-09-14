@@ -1,0 +1,65 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Applicant / uploaded documents
+uploads/
+private-documents/
+real-documents/
+*.passport.*
+*.bank-statement.*
+*.national-id.*
+
+# Runtime data
+logs/
+*.log
+results/
+cache/
+tmp/
+.temp/
+
+# Databases / local storage
+*.db
+*.sqlite
+*.sqlite3
+postgres-data/
+redis-data/
+minio-data/
+chroma-data/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Archives / backups
+*.bak
+*.backup
+*.dump
+*.sql
+*.tar
+*.tar.gz
