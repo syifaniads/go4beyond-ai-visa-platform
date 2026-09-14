@@ -31,19 +31,19 @@ Original MVP screenshot evidence:
 
 https://github.com/me-dangnhatminh/apie-adv-proj/tree/main/docs/specs/mvp/screenshots
 
-The personal portfolio additionally contains selected presentation visuals under [`docs/screenshots/`](./docs/screenshots/) so a reviewer can understand the workflow without searching through the original repository.
+This is the preferred source for original UI/prototype images because it preserves their collaborative-project context.
 
-## 5. Final presentation
+## 5. Final presentation evidence
 
-A PDF copy of the final Group 6 presentation is preserved in this portfolio at:
+The portfolio was curated using the team's **Group 6 Final Presentation - APIE Advanced Project** supplied by the project owner. A page-by-page technical evidence map is preserved here:
 
-[`docs/presentation/Group6-Final-Presentation.pdf`](./docs/presentation/Group6-Final-Presentation.pdf)
+[`docs/presentation/FINAL_PRESENTATION_NOTES.md`](./docs/presentation/FINAL_PRESENTATION_NOTES.md)
 
-Selected pages support the following portfolio claims:
+The presentation supports the following portfolio claims:
 
 | Presentation page | Evidence used in portfolio |
 |---:|---|
-| 2-3 | product problem framing: fragmented information, document uncertainty, lack of pre-submission feedback |
+| 2-3 | problem framing: fragmented information, document uncertainty, lack of pre-submission feedback |
 | 4 | ecosystem of applicants, agency partners, admins, official sources, AI platform |
 | 5 | prototype user flow: guided chat → upload → automated review → readiness score |
 | 6 | localized MVP stack / containerized architecture |
