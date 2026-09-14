@@ -1,21 +1,31 @@
-# Curated Visual Evidence
+# Visual Evidence Index
 
-These images are exported from the team's final APIE Advanced Camp Japan presentation and included to make the portfolio understandable without requiring a reviewer to open the full slide deck.
+The original team repository already contains an MVP screenshot directory, so this portfolio does not duplicate or re-encode every image.
 
-## Included
+## Original MVP screenshots
 
-- `prototype-flow.png` - guided chat → document upload → automated review → readiness score.
-- `localized-mvp-architecture.png` - localized/air-gapped prototype components.
-- `event-driven-architecture.png` - FastAPI, PostgreSQL, Redis, Celery, and frontend event/status flow.
-- `secure-document-lifecycle.png` - authenticated upload, presigned/direct object storage, background processing.
-- `deployment-roadmap.png` - prototype → HA → enterprise-cloud direction.
+https://github.com/me-dangnhatminh/apie-adv-proj/tree/main/docs/specs/mvp/screenshots
 
-## Source
+## Final-presentation visual map
 
-Full presentation:
+A page-by-page explanation of the final Group 6 presentation is available at:
 
-[`../presentation/Group6-Final-Presentation.pdf`](../presentation/Group6-Final-Presentation.pdf)
+[`../presentation/FINAL_PRESENTATION_NOTES.md`](../presentation/FINAL_PRESENTATION_NOTES.md)
+
+The most portfolio-relevant presentation pages cover:
+
+- prototype user flow;
+- localized MVP architecture;
+- knowledge-cache flywheel;
+- event-driven FastAPI/Redis/Celery design;
+- availability/resilience direction;
+- defense in depth;
+- data classification;
+- secure document-upload lifecycle;
+- operations/observability;
+- deployment roadmap;
+- service ecosystem.
 
 ## Interpretation rule
 
-A visual that contains an AWS/enterprise component represents a **design/roadmap** unless the portfolio explicitly identifies it as part of the localized MVP. See [`../../LIMITATIONS.md`](../../LIMITATIONS.md).
+A visual containing an AWS/enterprise component represents a **design/roadmap** unless the portfolio explicitly identifies it as part of the localized MVP. See [`../../LIMITATIONS.md`](../../LIMITATIONS.md).
